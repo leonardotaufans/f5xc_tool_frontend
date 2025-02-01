@@ -7,9 +7,11 @@ import 'package:flutter_highlight/themes/monokai-sublime.dart'
     show monokaiSublimeTheme;
 
 class RevisionDialog extends StatefulWidget {
-  const RevisionDialog({super.key, required this.jsonData});
+  const RevisionDialog(
+      {super.key, required this.jsonData, required this.title});
 
-  final Map<String, dynamic> jsonData;
+  final Object jsonData;
+  final Widget title;
 
   @override
   State<RevisionDialog> createState() => _RevisionDialogState();
@@ -20,19 +22,33 @@ class _RevisionDialogState extends State<RevisionDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: MediaQuery.of(context).size.height * 0.8,
-      width: MediaQuery.of(context).size.width * 0.8,
-      child: SingleChildScrollView(
-        child: CodeTheme(
-          data: CodeThemeData(styles: monokaiSublimeTheme),
-          child: CodeField(
-            readOnly: true,
-            controller: _codeController,
-            textStyle: GoogleFonts.sourceCodePro(),
+    return AlertDialog.adaptive(
+      title: widget.title,
+      content: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(8)
+        ),
+        height: MediaQuery.of(context).size.height * 0.8,
+        width: MediaQuery.of(context).size.width * 0.8,
+        child: SingleChildScrollView(
+          child: CodeTheme(
+            data: CodeThemeData(styles: monokaiSublimeTheme),
+            child: CodeField(
+              readOnly: true,
+              controller: _codeController,
+              textStyle: GoogleFonts.sourceCodePro(),
+            ),
           ),
         ),
       ),
+      actions: [
+        TextButton(
+          child: Text('Close'),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+        )
+      ],
     );
   }
 

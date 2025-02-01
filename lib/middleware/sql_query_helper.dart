@@ -7,10 +7,12 @@ import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/model/auth_model.dart';
 import 'package:f5xc_tool/model/login_model.dart';
 import 'package:f5xc_tool/model/revision_model.dart';
+import 'package:f5xc_tool/model/user_model.dart';
 import 'package:f5xc_tool/model/version_model.dart';
 
 class SqlQueryHelper {
-  Dio dio = Dio(BaseOptions(baseUrl: Configuration().middlewareHost));
+  Dio dio = Dio(BaseOptions(
+      baseUrl: Configuration().middlewareHost, validateStatus: (_) => true));
 
   // Login
   Future<LoginResult> login(String username, String rawPassword) async {
@@ -25,15 +27,69 @@ class SqlQueryHelper {
         contentType: 'application/json',
         method: 'POST');
     Dio dio = Dio(options);
-    var req = await dio.post('/mgmt/login', data: requestBody);
-    LoginResult exception = LoginResult(
-        responseCode: 401,
-        description: {"error": "Username/password is incorrect"});
-    if (req.statusCode! > 200) {
-      return exception;
-    } else {
+    try {
+      var req = await dio.post('/mgmt/login', data: requestBody);
       return LoginResult(
           responseCode: 200, loginData: LoginModel.fromJson(req.data));
+    } on DioException {
+      LoginResult exception = LoginResult(
+          responseCode: 401,
+          description: {"error": "Username/password is incorrect"});
+      return exception;
+    }
+  }
+
+  Future<UserResponse> getMyself(String bearer) async {
+    UserResponse exception =
+        UserResponse(statusCode: 401, message: "Bearer invalid or empty.");
+    try {
+      if (bearer.isEmpty) {
+        return exception;
+      }
+      Map<String, String> header = {
+        HttpHeaders.authorizationHeader: "Bearer $bearer"
+      };
+      var request =
+          await dio.post('/mgmt/get-myself', options: Options(headers: header));
+      if (request.statusCode! > 200) {
+        return UserResponse(
+            statusCode: request.statusCode ?? 400,
+            message: request.statusMessage);
+      } else {
+        Map<String, dynamic> response = request.data;
+        return UserResponse(
+            statusCode: 200, model: UserModel.fromJson(response));
+      }
+    } on DioException {
+      return exception;
+    }
+  }
+
+  Future<ListUserResponse> getUsers(String bearer) async {
+    ListUserResponse exception =
+        ListUserResponse(statusCode: 401, message: "Bearer invalid or empty.");
+    try {
+      if (bearer.isEmpty) {
+        return exception;
+      }
+      Map<String, String> header = {
+        HttpHeaders.authorizationHeader: "Bearer $bearer"
+      };
+      var request =
+          await dio.get('/mgmt/users', options: Options(headers: header));
+      if (request.statusCode! > 200) {
+        return ListUserResponse(
+            statusCode: request.statusCode ?? 400,
+            message: request.statusMessage);
+      } else {
+        List<UserModel> model = [];
+        for (var each in request.data) {
+          model.add(UserModel.fromJson(each));
+        }
+        return ListUserResponse(statusCode: 200, userList: model);
+      }
+    } on DioException {
+      return exception;
     }
   }
 
@@ -167,6 +223,37 @@ class SqlQueryHelper {
           responseCode: request.statusCode ?? 400,
           errorMessage: request.statusMessage);
     }
-    return ListRevisionModel(responseCode: request.statusCode ?? 201, errorMessage: "${request.data}");
+    return ListRevisionModel(
+        responseCode: request.statusCode ?? 201,
+        errorMessage: "${request.data}");
+  }
+
+  Future<void> replacePolicy(String bearer, String appName, String environment,
+      int targetVersion) async {
+    try {
+      if (bearer.isEmpty || appName.isEmpty || environment.isEmpty) {
+        throw Exception("Value is missing");
+      }
+      Map<String, String> headers = {
+        HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      };
+      Map<String, dynamic> body = {
+        "app_name": appName,
+        "environment": environment,
+        "target_version": targetVersion
+      };
+      Options options = Options(
+          method: 'POST',
+          contentType: 'application/json',
+          headers: headers,
+          responseType: ResponseType.json);
+      var request = await dio.post('/xc/app/replace-version',
+          options: options, data: body);
+      if ((request.statusCode ?? 400) > 200) {
+        throw Exception(request.data);
+      }
+    } on DioException catch (_, e) {
+      throw Exception(e);
+    }
   }
 }

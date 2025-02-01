@@ -5,6 +5,18 @@ enum LoginState { none, loading, success, fail }
 
 enum ActivityState { none, loading, success, fail }
 
+class UserRole {
+  static String guest = "guest";
+  static String admin = "admin";
+}
+
+class Pages {
+  static const int dashboard = 0;
+  static const int policyDiff = 1;
+  static const int users = 2;
+  static const int eventLogs = 3;
+}
+
 class Configuration {
   final middlewareHost = "http://localhost:8000"; //todo: change to prod
   final KEY_AUTH = "Authorization";

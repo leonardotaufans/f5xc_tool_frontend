@@ -40,13 +40,13 @@ class OwO {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['name'] = this.name;
-    data['version'] = this.version;
-    data['uid'] = this.uid;
-    data['echo'] = this.echo;
-    if (this.contents != null) {
-      data['contents'] = this.contents!.toJson();
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['name'] = name;
+    data['version'] = version;
+    data['uid'] = uid;
+    data['echo'] = echo;
+    if (contents != null) {
+      data['contents'] = contents!.toJson();
     }
     return data;
   }
@@ -66,10 +66,10 @@ class Contents {
   }
 
   Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = Map<String, dynamic>();
-    data['stockName'] = this.stockName;
-    data['condition'] = this.condition;
-    data['price'] = this.price;
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['stockName'] = stockName;
+    data['condition'] = condition;
+    data['price'] = price;
     return data;
   }
 }

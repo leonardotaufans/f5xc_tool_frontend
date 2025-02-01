@@ -1,4 +1,5 @@
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
+import 'package:f5xc_tool/model/user_model.dart';
 import 'package:f5xc_tool/model/version_model.dart';
 import 'package:f5xc_tool/screen/dashboard/load_balancer/my_list.dart';
 import 'package:flutter/material.dart';
@@ -18,6 +19,7 @@ class PolicyDashboard extends StatefulWidget {
 class PolicyDashboardState extends State<PolicyDashboard> {
   late ListVersionModel _stagingModel = ListVersionModel(responseCode: 100);
   late ListVersionModel _productionModel = ListVersionModel(responseCode: 100);
+  late UserResponse _user = UserResponse(statusCode: 100);
   late String timezone = 'Asia/Singapore';
 
   @override
@@ -58,6 +60,7 @@ class PolicyDashboardState extends State<PolicyDashboard> {
               MyList(
                 modelList: _stagingModel,
                 policyType: PolicyType.staging,
+                user: _user,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
@@ -86,8 +89,10 @@ class PolicyDashboardState extends State<PolicyDashboard> {
                 ),
               ),
               MyList(
-                  modelList: _productionModel,
-                  policyType: PolicyType.production)
+                modelList: _productionModel,
+                policyType: PolicyType.production,
+                user: _user,
+              )
               // tableBuilder(_productionModel
             ],
           ),
@@ -112,9 +117,9 @@ class PolicyDashboardState extends State<PolicyDashboard> {
   @override
   void initState() {
     super.initState();
-
     getStagingData().then((val) => setState(() => _stagingModel = val));
     getProductionData().then((val) => setState(() => _productionModel = val));
+    getMyself().then((val) => setState(() => _user = val));
   }
 
   void callback() {
@@ -123,6 +128,7 @@ class PolicyDashboardState extends State<PolicyDashboard> {
       getProductionData().then((val) => setState(() => _productionModel = val));
     });
   }
+
   Future<ListVersionModel> getStagingData() async {
     FlutterSecureStorage storage = FlutterSecureStorage();
     String bearer = await storage.read(key: 'auth') ?? "";
@@ -133,5 +139,11 @@ class PolicyDashboardState extends State<PolicyDashboard> {
     FlutterSecureStorage storage = FlutterSecureStorage();
     String bearer = await storage.read(key: 'auth') ?? "";
     return SqlQueryHelper().getApps(PolicyType.production, bearer);
+  }
+
+  Future<UserResponse> getMyself() async {
+    FlutterSecureStorage storage = FlutterSecureStorage();
+    String bearer = await storage.read(key: 'auth') ?? "";
+    return SqlQueryHelper().getMyself(bearer);
   }
 }
