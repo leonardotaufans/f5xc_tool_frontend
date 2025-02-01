@@ -1,4 +1,3 @@
-
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
 import 'package:flutter/material.dart';
@@ -56,7 +55,10 @@ class _LoginScreenState extends State<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             statusLogin(loginState, loginResult),
-            const Text("Login"),
+            Text(
+              "Login",
+              style: Theme.of(context).textTheme.headlineLarge,
+            ),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Form(
@@ -68,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       width: MediaQuery.of(context).size.width * 0.4,
                       child: TextFormField(
                         controller: _usernameController,
-                        keyboardType: TextInputType.emailAddress,
+                        keyboardType: TextInputType.name,
                         decoration: const InputDecoration(
                             hintText: 'Username', border: OutlineInputBorder()),
                       ),
@@ -142,7 +144,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Lottie.asset(
                   'lottie/login_loading.json',
                 )),
-            Text('Login failed.'),
+            Text(
+              'Login failed. Please check your username/password.',
+              style: Theme.of(context).textTheme.headlineMedium,
+            ),
+            Text('Error log: ${loginResult.description}')
           ],
         );
     }
@@ -188,8 +194,7 @@ onLogin(BuildContext context, Function callback, String username,
   LoginResult login = await SqlQueryHelper().login(username, password);
   if (login.responseCode == 200) {
     callback(LoginState.success, login);
-    await storage.write(
-        key: 'auth', value: login.loginData!.accessToken);
+    await storage.write(key: 'auth', value: login.loginData!.accessToken);
     // await storage.write(key: 'login_result', value: jsonEncode(login));
     if (context.mounted) {
       Navigator.pushReplacementNamed(context, '/dashboard');

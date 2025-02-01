@@ -71,7 +71,7 @@ class _MyNavRailState extends State<MyNavRail> {
                     onPressed: () async {
                       await FlutterSecureStorage().deleteAll();
                       if (context.mounted) {
-                        Navigator.of(context).pushReplacementNamed('/');
+                        Navigator.of(context).pushReplacementNamed('/login');
                       }
                     },
                     icon: const Icon(Icons.logout)),

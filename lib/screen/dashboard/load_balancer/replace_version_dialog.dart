@@ -62,12 +62,17 @@ class ReplaceVersionDialog extends StatelessWidget {
                       content: Flex(
                         direction: Axis.horizontal,
                         children: [
+                          SizedBox(
+                              width: 64,
+                              height: 64,
+                              child: CircularProgressIndicator()),
+                          SizedBox(
+                            width: 16,
+                          ),
                           Expanded(
-                              flex: 1,
-                              child:
-                                  SizedBox(width: 64, height: 64, child: CircularProgressIndicator())),
-                          SizedBox(width: 16,),
-                          Expanded(flex: 3, child: Text('Please wait...\nUploading version data to XC...'))
+                              flex: 3,
+                              child: Text(
+                                  'Please wait...\nRefresh the table once this request is completed.'))
                         ],
                       ),
                     );

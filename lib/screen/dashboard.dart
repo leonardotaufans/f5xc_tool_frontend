@@ -64,31 +64,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       //todo: create FAB builder to follow the current page using indexCallback
       floatingActionButton: switchFab(_selectedIndex, isAdmin),
-      // floatingActionButton: FloatingActionButton(
-      //   selectedIndex: _selectedIndex,
-      //   onPressed: fabSnapshot(),
-      //   // onPressed: () async {
-      //   //   var snap = snapshot();
-      //   //   if (context.mounted) {
-      //   //     showDialog(
-      //   //         barrierDismissible: false,
-      //   //         context: context,
-      //   //         builder: (context) {
-      //   //           return SnapshotDialog(
-      //   //             bearer: _authKey,
-      //   //           );
-      //   //         });
-      //   //   }
-      //   //   snap.then((value) {
-      //   //     if (context.mounted) {
-      //   //       // PolicyDashboardState().callback();
-      //   //       Navigator.pop(context);
-      //   //     }
-      //   //   });
-      //   // },
-      //   label: 'Snapshot Now',
-      //   icon: Icon(Icons.download_for_offline_outlined),
-      // ),
     );
   }
 
@@ -131,7 +106,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       default:
         if (isAdmin) {
           return FloatingActionButton.extended(
-              icon: Icon(Icons.upload_rounded),
+              icon: Icon(Icons.sync),
               onPressed: fabSnapshot(),
               label: Text('Snapshot Now'));
         } else {

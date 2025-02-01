@@ -232,31 +232,7 @@ class _MyListState extends State<MyList> {
           context: context,
           builder: (context) {
             return ReplaceVersionDialog(data: data, model: model, policyType: widget.policyType);
-            // return AlertDialog(
-            //   title: Text('Replace Version'),
-            //   content: Text(
-            //       'Replace version ${data.appName}:${widget
-            //           .policyType} version ${model.currentVersion} with ${data
-            //           .version}.\nAre you sure?'),
-            //   actions: [
-            //     TextButton(
-            //       onPressed: () {
-            //         showDialog(context: context,
-            //             builder: (_) =>
-            //                 ReplaceVersionDialog(data: data,
-            //                     model: model,
-            //                     policyType: widget.policyType));
-            //       },
-            //       child: Text('Yes'),
-            //     ),
-            //     TextButton(
-            //       onPressed: () {
-            //         Navigator.pop(context);
-            //       },
-            //       child: Text('No'),
-            //     )
-            //   ],
-            // );
+
           });
     };
   }
