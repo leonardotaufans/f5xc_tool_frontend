@@ -17,10 +17,6 @@ class _MyNavRailState extends State<MyNavRail> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // const SizedBox(
-        //   height: 50,
-        //   child: Center(child: Text('LOGO')),
-        // ),
         const Padding(
           padding: EdgeInsets.symmetric(vertical: 10),
           child: Divider(),
@@ -38,14 +34,22 @@ class _MyNavRailState extends State<MyNavRail> {
             selectedIndex: _selectedIndex,
             destinations: const [
               NavigationRailDestination(
+                  icon: Icon(Icons.http_outlined),
+                  selectedIcon: Icon(Icons.http),
+                  label: Text('HTTP LB')),
+              NavigationRailDestination(
                   icon: Icon(Icons.account_tree_outlined),
                   selectedIcon: Icon(Icons.account_tree),
-                  label: Text('Apps')),
+                  label: Text('TCP LB')),
+              NavigationRailDestination(
+                  icon: Icon(Icons.cloud_outlined),
+                  selectedIcon: Icon(Icons.cloud),
+                  label: Text('CDN LB')),
               NavigationRailDestination(
                   icon: Icon(Icons.compare_outlined),
                   selectedIcon: Icon(Icons.compare_outlined),
                   label: Text(
-                    'Apps\nDiff',
+                    'LB\nDiff',
                     textAlign: TextAlign.center,
                   )),
               NavigationRailDestination(

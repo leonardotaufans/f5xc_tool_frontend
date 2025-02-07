@@ -1,5 +1,5 @@
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
-import 'package:f5xc_tool/model/revision_model.dart';
+import 'package:f5xc_tool/model/http_lb_revision_model.dart';
 import 'package:flutter/material.dart';
 
 class SnapshotDialog extends StatefulWidget {
@@ -32,13 +32,21 @@ class _SnapshotDialogState extends State<SnapshotDialog> {
         return true;
       },
       child: AlertDialog(
-        content:
+        content: Flex(
+          direction: Axis.horizontal,
+          children: [
             SizedBox(width: 60, height: 60, child: CircularProgressIndicator()),
+            VerticalDivider(),
+            Expanded(
+              child: Text('Please wait. \nUpdating database...'),
+            )
+          ],
+        ),
       ),
     );
   }
 
-  Future<ListRevisionModel> snapshot() async {
+  Future<ListRevisionModelHTTPLB> snapshot() async {
     print('snapshot doko???');
     return await SqlQueryHelper().snapshotManual(widget.bearer);
   }

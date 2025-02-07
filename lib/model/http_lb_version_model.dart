@@ -1,27 +1,27 @@
-class ListVersionModel {
+class ListHttpLBVersionModel {
   int responseCode;
   String? error;
-  List<VersionModel>? versionData;
+  List<HttpLBVersionModel>? versionData;
 
-  ListVersionModel(
+  ListHttpLBVersionModel(
       {required this.responseCode, this.error, this.versionData});
 }
 
-class VersionModel {
+class HttpLBVersionModel {
   String? appName;
   String? environment;
   int? timestamp;
   int? currentVersion;
   String? uid;
 
-  VersionModel(
+  HttpLBVersionModel(
       {this.appName,
       this.environment,
       this.timestamp,
       this.currentVersion,
       this.uid});
 
-  VersionModel.fromJson(Map<String, dynamic> json) {
+  HttpLBVersionModel.fromJson(Map<String, dynamic> json) {
     appName = json['app_name'];
     environment = json['environment'];
     timestamp = json['timestamp'];

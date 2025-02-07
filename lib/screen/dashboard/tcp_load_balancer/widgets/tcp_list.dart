@@ -1,30 +1,38 @@
+import 'package:code_text_field/code_text_field.dart';
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/middleware/request_helper.dart';
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
-import 'package:f5xc_tool/model/revision_model.dart';
+import 'package:f5xc_tool/model/http_lb_revision_model.dart';
+import 'package:f5xc_tool/model/tcp_lb_model.dart';
 import 'package:f5xc_tool/model/user_model.dart';
-import 'package:f5xc_tool/model/version_model.dart';
-import 'package:f5xc_tool/screen/dashboard/load_balancer/replace_version_dialog.dart';
-import 'package:f5xc_tool/screen/dashboard/load_balancer/revision_dialog.dart';
+import 'package:f5xc_tool/model/http_lb_version_model.dart';
+import 'package:f5xc_tool/screen/dashboard/http_load_balancer/widgets/replace_version_dialog.dart';
+import 'package:f5xc_tool/screen/dashboard/http_load_balancer/widgets/revision_dialog.dart';
+import 'package:f5xc_tool/screen/dashboard/tcp_load_balancer/widgets/replace_tcp_version_dialog.dart';
+import 'package:f5xc_tool/screen/dashboard/tcp_load_balancer/widgets/tcp_changes_dialog.dart';
 import 'package:f5xc_tool/widgets/user_expansion_tile.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:highlight/languages/json.dart';
 
-class MyList extends StatefulWidget {
-  const MyList({super.key,
-    required this.modelList,
-    required this.policyType,
-    required this.user});
+class TcpList extends StatefulWidget {
+  const TcpList(
+      {super.key,
+      required this.modelList,
+      required this.policyType,
+      required this.user});
 
   final PolicyType policyType;
-  final ListVersionModel modelList;
+  final ListTcpLBVersionModel modelList;
   final UserResponse user;
 
   @override
-  State<MyList> createState() => _MyListState();
+  State<TcpList> createState() => _TcpListState();
 }
 
-class _MyListState extends State<MyList> {
+class _TcpListState extends State<TcpList> {
   late FlutterSecureStorage storage;
   late String auth = '';
 
@@ -34,30 +42,17 @@ class _MyListState extends State<MyList> {
     // getData();
     if (widget.modelList.responseCode > 200) {
       return Text('Error ${widget.modelList.responseCode}');
-    } else if (widget.modelList.versionData == null) {
+    } else if (widget.modelList.modelList == null) {
       return Text('Version Data is empty');
     } else {
-      List<VersionModel> model =
-          widget.modelList.versionData ?? [VersionModel()];
+      List<TcpLBVersionModel> model =
+          widget.modelList.modelList ?? [TcpLBVersionModel()];
       return ListView.builder(
-          itemCount: widget.modelList.versionData!.length,
+          itemCount: widget.modelList.modelList!.length,
           shrinkWrap: true,
           itemBuilder: (context, index) {
             return Card(
               child: ExpansionTile(
-                // title: ListTile(
-                //   style: ListTileStyle.drawer,
-                //   leading: IconButton.filledTonal(
-                //       tooltip: model[index].environment?.toUpperCase() ??
-                //           "Staging",
-                //       onPressed: null,
-                //       icon: model[index].environment == "staging"
-                //           ? Icon(Icons.shield_outlined)
-                //           : Icon(Icons.shield_rounded)),
-                //   title: Text('${model[index].appName}'),
-                //   subtitle: Text(
-                //       'Version ${model[index].currentVersion} is active.'),
-                // ),
                   leading: AdjustedCircleAvatar(
                       backgroundColor: model[index].environment == "staging"
                           ? Colors.blueGrey
@@ -74,7 +69,7 @@ class _MyListState extends State<MyList> {
                       )),
                   title: Text('${model[index].appName}'),
                   subtitle:
-                  Text('Active version: ${model[index].currentVersion}'),
+                      Text('Active version: ${model[index].currentVersion}'),
                   children: [
                     ListTile(
                       leading: Icon(
@@ -86,8 +81,8 @@ class _MyListState extends State<MyList> {
                           builder: (context, snapshot) {
                             switch (snapshot.connectionState) {
                               case ConnectionState.done:
-                                ListRevisionModel data = snapshot.data ??
-                                    ListRevisionModel(responseCode: 400);
+                                ListTcpLBRevisionModel data = snapshot.data ??
+                                    ListTcpLBRevisionModel(responseCode: 400);
                                 return _buildRevisionList(
                                     data, model[index], userModel);
                               default:
@@ -101,9 +96,9 @@ class _MyListState extends State<MyList> {
     }
   }
 
-  Widget _buildRevisionList(ListRevisionModel data, VersionModel model,
-      UserModel user) {
-    List<RevisionModel> modelList = data.listRevisionModel ?? [];
+  Widget _buildRevisionList(
+      ListTcpLBRevisionModel data, TcpLBVersionModel model, UserModel user) {
+    List<TcpLBRevisionModel> modelList = data.modelList ?? [];
     return ListView.builder(
         itemCount: modelList.length,
         shrinkWrap: true,
@@ -122,23 +117,50 @@ class _MyListState extends State<MyList> {
                 backgroundColor: active ? Colors.green : Colors.blueGrey,
                 child: active
                     ? Icon(
-                  Icons.policy_rounded,
-                  color: Colors.white,
-                )
+                        Icons.policy_rounded,
+                        color: Colors.white,
+                      )
                     : Icon(Icons.policy_outlined, color: Colors.white),
               ),
             ),
             title: Text(
-                '${modelList[index].appName} Version ${modelList[index]
-                    .version}'),
+                '${modelList[index].appName} Version ${modelList[index].version}'),
             subtitle: Text(
-                'Date modified: ${RequestHelper().dateTimeFromEpoch(
-                    (modelList[index].timestamp!), 'Asia/Singapore')} GMT +8'),
+                'Date modified: ${RequestHelper().dateTimeFromEpoch((modelList[index].timestamp!), 'Asia/Singapore')} GMT +8'),
             children: [
               ListTile(
                 subtitle: Text(modelList[index].generatedBy!.toUpperCase()),
                 title: Text('Generated by'),
               ),
+              ListTile(
+                  title: Text(
+                      'Changes from Version ${modelList[index].previousVersion ?? (modelList[index].version ?? 1) - 1}'),
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog.adaptive(
+                            content: SizedBox(
+                              width: MediaQuery.of(context).size.width * 0.8,
+                              height: MediaQuery.of(context).size.height * 0.8,
+                              child: SingleChildScrollView(
+                                child: TCPChangesDialog(
+                                    revision: modelList[index],
+                                    environment:
+                                    model.environment ?? "production"),
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                child: Text('Close'),
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                },
+                              )
+                            ],
+                          );
+                        });
+                  }),
               ListTile(
                 title: Text('Load Balancer Configuration'),
                 trailing: Icon(Icons.navigate_next),
@@ -214,7 +236,7 @@ class _MyListState extends State<MyList> {
         });
   }
 
-  Future<ListRevisionModel> _buildChildren(VersionModel model) async {
+  Future<ListTcpLBRevisionModel> _buildChildren(TcpLBVersionModel model) async {
     FlutterSecureStorage storage = FlutterSecureStorage();
     String bearer = await storage.read(key: 'auth') ?? "";
     PolicyType type = model.environment == "staging"
@@ -223,16 +245,17 @@ class _MyListState extends State<MyList> {
     // return await SqlQueryHelper()
     //     .getAllRevisions(bearer, model.appName ?? "", type);
 
-    return SqlQueryHelper().getAllRevisions(bearer, model.appName ?? "", type);
+    return SqlQueryHelper()
+        .getAllTcpRevisions(bearer, model.appName ?? "", type);
   }
 
-  Function() replaceVersion(RevisionModel data, VersionModel model) {
+  Function() replaceVersion(TcpLBRevisionModel data, TcpLBVersionModel model) {
     return () {
       showDialog(
           context: context,
           builder: (context) {
-            return ReplaceVersionDialog(data: data, model: model, policyType: widget.policyType);
-
+            return ReplaceTcpVersionDialog(
+                data: data, model: model, policyType: widget.policyType);
           });
     };
   }

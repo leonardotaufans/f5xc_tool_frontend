@@ -1,4 +1,3 @@
-
 enum PolicyType { production, staging }
 
 enum LoginState { none, loading, success, fail }
@@ -10,11 +9,32 @@ class UserRole {
   static String admin = "admin";
 }
 
+enum LoadBalancerType { cdn, tcp, http }
+
 class Pages {
-  static const int dashboard = 0;
-  static const int policyDiff = 1;
-  static const int users = 2;
-  static const int eventLogs = 3;
+  static const int httpDashboard = 0;
+  static const int tcpDashboard = 1;
+  static const int cdnDashboard = 2;
+  static const int policyDiff = 3;
+  static const int users = 4;
+  static const int eventLogs = 5;
+}
+
+class PagesName {
+  static const httpDashboard = "HTTP Load Balancer";
+  static const tcpDashboard = "TCP Load Balancer";
+  static const cdnDashboard = "CDN Load Balancer";
+  static const policyDiff = "Compare Policy";
+  static const users = "User Management";
+  static const eventLogs = "Event Logs";
+  static const number = [
+    httpDashboard,
+    tcpDashboard,
+    cdnDashboard,
+    policyDiff,
+    users,
+    eventLogs
+  ];
 }
 
 class Configuration {

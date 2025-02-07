@@ -1,7 +1,7 @@
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
-import 'package:f5xc_tool/model/revision_model.dart';
-import 'package:f5xc_tool/model/version_model.dart';
+import 'package:f5xc_tool/model/http_lb_revision_model.dart';
+import 'package:f5xc_tool/model/http_lb_version_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -12,8 +12,8 @@ class ReplaceVersionDialog extends StatelessWidget {
       required this.model,
       required this.policyType});
 
-  final RevisionModel data;
-  final VersionModel model;
+  final RevisionModelHTTPLB data;
+  final HttpLBVersionModel model;
   final PolicyType policyType;
 
   @override
@@ -96,6 +96,6 @@ class ReplaceVersionDialog extends StatelessWidget {
     FlutterSecureStorage storage = FlutterSecureStorage();
     String bearer = await storage.read(key: 'auth') ?? "";
     return SqlQueryHelper()
-        .replacePolicy(bearer, appName, environment, targetVersion);
+        .replaceHttpPolicy(bearer, appName, environment, targetVersion);
   }
 }

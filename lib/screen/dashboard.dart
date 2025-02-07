@@ -1,16 +1,18 @@
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
 import 'package:f5xc_tool/model/auth_model.dart';
-import 'package:f5xc_tool/model/revision_model.dart';
-import 'package:f5xc_tool/screen/dashboard/my_nav_rail.dart';
-import 'package:f5xc_tool/screen/dashboard/load_balancer/snapshot_dialog.dart';
-import 'package:f5xc_tool/screen/policy_diff_frag.dart';
+import 'package:f5xc_tool/model/http_lb_revision_model.dart';
+import 'package:f5xc_tool/screen/dashboard/cdn_load_balancer/cdn_dashboard.dart';
+import 'package:f5xc_tool/screen/dashboard/tcp_load_balancer/tcp_dashboard.dart';
+import 'package:f5xc_tool/screen/dashboard/widgets/my_nav_rail.dart';
+import 'package:f5xc_tool/screen/dashboard/widgets/snapshot_dialog.dart';
+import 'package:f5xc_tool/diff/policy_diff_frag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import 'dashboard/event_log_frag.dart';
-import 'dashboard/load_balancer_frag.dart';
-import 'dashboard/user_frag.dart';
+import 'event_logs/event_log_frag.dart';
+import 'dashboard/http_load_balancer/http_dashboard.dart';
+import 'users/user_frag.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -55,19 +57,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(title: Text(PagesName.number[_selectedIndex].toUpperCase(), style: Theme.of(context).textTheme.bodyLarge,), elevation: 1,),
       body: Row(
         children: [
           MyNavRail(indexCallback: indexCallback),
           const VerticalDivider(),
-          Expanded(child: switchPages(_selectedIndex))
+          Expanded(
+              child: Container(
+                  color: Theme.of(context).canvasColor,
+                  child: switchPages(_selectedIndex)))
         ],
       ),
-      //todo: create FAB builder to follow the current page using indexCallback
       floatingActionButton: switchFab(_selectedIndex, isAdmin),
     );
   }
 
-  Future<ListRevisionModel> snapshot() async {
+  Future<ListRevisionModelHTTPLB> snapshot() async {
     String authKey = await _storage.read(key: 'auth') ?? "";
     print('snapshot doko??? authKey: $authKey');
     return SqlQueryHelper().snapshotManual(authKey);
@@ -75,14 +80,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget switchPages(int index) {
     switch (index) {
-      case 1:
+      case Pages.policyDiff:
         return const PolicyDiffFrag();
-      case 2:
+      case Pages.users:
         return const UserDashboard();
-      case 3:
+      case Pages.eventLogs:
         return const EventLogDashboard();
+      case Pages.cdnDashboard:
+        return const CDNDashboard();
+      case Pages.tcpDashboard:
+        return const TcpPolicyDashboard();
       default:
-        return const PolicyDashboard();
+        return const HttpPolicyDashboard();
     }
   }
 

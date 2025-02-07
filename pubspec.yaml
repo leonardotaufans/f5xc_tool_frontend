@@ -47,6 +47,8 @@ dependencies:
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
   fsoft_diff_patch: ^0.1.1
+  retry: ^3.1.2
+  shimmer: ^3.0.0
 
 dev_dependencies:
   flutter_test:

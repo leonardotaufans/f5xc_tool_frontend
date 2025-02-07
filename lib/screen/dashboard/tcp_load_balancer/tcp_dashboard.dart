@@ -1,24 +1,27 @@
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
+import 'package:f5xc_tool/model/tcp_lb_model.dart';
 import 'package:f5xc_tool/model/user_model.dart';
-import 'package:f5xc_tool/model/version_model.dart';
-import 'package:f5xc_tool/screen/dashboard/load_balancer/my_list.dart';
+import 'package:f5xc_tool/model/http_lb_version_model.dart';
+import 'package:f5xc_tool/screen/dashboard/tcp_load_balancer/widgets/tcp_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-import '../../middleware/config.dart';
+import '../../../middleware/config.dart';
 
-class PolicyDashboard extends StatefulWidget {
+class TcpPolicyDashboard extends StatefulWidget {
   final String authKey = '';
 
-  const PolicyDashboard({super.key, authKey});
+  const TcpPolicyDashboard({super.key, authKey});
 
   @override
-  State<PolicyDashboard> createState() => PolicyDashboardState();
+  State<TcpPolicyDashboard> createState() => TcpPolicyDashboardState();
 }
 
-class PolicyDashboardState extends State<PolicyDashboard> {
-  late ListVersionModel _stagingModel = ListVersionModel(responseCode: 100);
-  late ListVersionModel _productionModel = ListVersionModel(responseCode: 100);
+class TcpPolicyDashboardState extends State<TcpPolicyDashboard> {
+  late ListTcpLBVersionModel _stagingModel =
+      ListTcpLBVersionModel(responseCode: 100);
+  late ListTcpLBVersionModel _productionModel =
+      ListTcpLBVersionModel(responseCode: 100);
   late UserResponse _user = UserResponse(statusCode: 100);
   late String timezone = 'Asia/Singapore';
 
@@ -44,20 +47,23 @@ class PolicyDashboardState extends State<PolicyDashboard> {
                     const SizedBox(
                       width: 16,
                     ),
-                    IconButton.filledTonal(
-                        onPressed: () {
-                          getStagingData().then((val) {
-                            setState(() {
-                              _stagingModel = val;
+                    Tooltip(
+                      message: 'Refresh Staging Table',
+                      child: OutlinedButton.icon(
+                          label: Text('Refresh'),
+                          onPressed: () {
+                            getStagingData().then((val) {
+                              setState(() {
+                                _stagingModel = val;
+                              });
                             });
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        tooltip: 'Refresh Table'),
+                          },
+                          icon: const Icon(Icons.refresh)),
+                    ),
                   ],
                 ),
               ),
-              MyList(
+              TcpList(
                 modelList: _stagingModel,
                 policyType: PolicyType.staging,
                 user: _user,
@@ -75,20 +81,23 @@ class PolicyDashboardState extends State<PolicyDashboard> {
                     const SizedBox(
                       width: 16,
                     ),
-                    IconButton.filledTonal(
-                        onPressed: () {
-                          getProductionData().then((val) {
-                            setState(() {
-                              _productionModel = val;
+                    Tooltip(
+                      message: 'Refresh Production Table',
+                      child: OutlinedButton.icon(
+                          label: Text('Refresh'),
+                          onPressed: () {
+                            getProductionData().then((val) {
+                              setState(() {
+                                _productionModel = val;
+                              });
                             });
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        tooltip: 'Refresh Table'),
+                          },
+                          icon: const Icon(Icons.refresh)),
+                    ),
                   ],
                 ),
               ),
-              MyList(
+              TcpList(
                 modelList: _productionModel,
                 policyType: PolicyType.production,
                 user: _user,
@@ -129,16 +138,16 @@ class PolicyDashboardState extends State<PolicyDashboard> {
     });
   }
 
-  Future<ListVersionModel> getStagingData() async {
+  Future<ListTcpLBVersionModel> getStagingData() async {
     FlutterSecureStorage storage = FlutterSecureStorage();
     String bearer = await storage.read(key: 'auth') ?? "";
-    return SqlQueryHelper().getApps(PolicyType.staging, bearer);
+    return SqlQueryHelper().getTcpVersion(PolicyType.staging, bearer);
   }
 
-  Future<ListVersionModel> getProductionData() async {
+  Future<ListTcpLBVersionModel> getProductionData() async {
     FlutterSecureStorage storage = FlutterSecureStorage();
     String bearer = await storage.read(key: 'auth') ?? "";
-    return SqlQueryHelper().getApps(PolicyType.production, bearer);
+    return SqlQueryHelper().getTcpVersion(PolicyType.production, bearer);
   }
 
   Future<UserResponse> getMyself() async {
