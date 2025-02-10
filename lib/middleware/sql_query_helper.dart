@@ -584,4 +584,66 @@ class SqlQueryHelper {
       throw Exception(e);
     }
   }
+
+  Future<bool> checkAuth(String bearer) async {
+    try {
+      Map<String, String> headers = {
+        HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      };
+      Options options = Options(
+          method: 'POST',
+          contentType: 'application/json',
+          headers: headers,
+          responseType: ResponseType.json);
+      var request = await dio.post('/test/token', options: options);
+      if (request.statusCode == 200) {
+        return true;
+      } else {
+        return false;
+      }
+    } on DioException {
+      return false;
+    }
+  }
+
+  Future<String> comparePolicy(
+      String bearer,
+      String path,
+      String oldName,
+      int oldVer,
+      String oldType,
+      String newName,
+      int newVer,
+      String newType) async {
+    String testBearer = bearer;
+    if (!await checkAuth(testBearer)) {
+      var user = await refreshToken();
+      testBearer = user.loginData?.accessToken ?? "";
+    }
+    Map<String, dynamic> query = {
+      "new_app_name": newName,
+      "new_version": newVer,
+      "new_environment": newType,
+      "old_app_name": oldName,
+      "old_environment": oldType,
+      "old_version": oldVer
+    };
+    try {
+      Map<String, String> headers = {
+        HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      };
+
+      Options options = Options(
+          method: 'GET',
+          contentType: 'application/json',
+          headers: headers,
+          responseType: ResponseType.json);
+      var request = await dio.get('/xc/$path/compare-version',
+          queryParameters: query, options: options);
+      return jsonEncode(request.data);
+    } on DioException {
+      return "";
+    }
+    return "";
+  }
 }

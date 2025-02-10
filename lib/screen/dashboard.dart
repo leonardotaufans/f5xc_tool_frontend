@@ -6,7 +6,7 @@ import 'package:f5xc_tool/screen/dashboard/cdn_load_balancer/cdn_dashboard.dart'
 import 'package:f5xc_tool/screen/dashboard/tcp_load_balancer/tcp_dashboard.dart';
 import 'package:f5xc_tool/screen/dashboard/widgets/my_nav_rail.dart';
 import 'package:f5xc_tool/screen/dashboard/widgets/snapshot_dialog.dart';
-import 'package:f5xc_tool/diff/policy_diff_frag.dart';
+import 'package:f5xc_tool/screen/diff/policy_diff_frag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -57,7 +57,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(PagesName.number[_selectedIndex].toUpperCase(), style: Theme.of(context).textTheme.bodyLarge,), elevation: 1,),
+      appBar: AppBar(
+        title: Text(
+          PagesName.number[_selectedIndex].toUpperCase(),
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        elevation: 1,
+      ),
       body: Row(
         children: [
           MyNavRail(indexCallback: indexCallback),

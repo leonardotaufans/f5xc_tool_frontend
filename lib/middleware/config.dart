@@ -9,6 +9,11 @@ class UserRole {
   static String admin = "admin";
 }
 
+class PolicyName {
+  static String production = "production";
+  static String staging = "staging";
+}
+
 enum LoadBalancerType { cdn, tcp, http }
 
 class Pages {
