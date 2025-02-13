@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/model/auth_model.dart';
 import 'package:f5xc_tool/model/cdn_lb_model.dart';
+import 'package:f5xc_tool/model/event_log_model.dart';
 import 'package:f5xc_tool/model/login_model.dart';
 import 'package:f5xc_tool/model/http_lb_revision_model.dart';
 import 'package:f5xc_tool/model/model_compare.dart';
@@ -23,10 +24,6 @@ class SqlQueryHelper {
   Future<LoginResult> login(String username, String rawPassword) async {
     FormData requestBody =
         FormData.fromMap({"username": username, "password": rawPassword});
-    Map<String, String> requestHeader = {
-      "Accept": "*/*",
-      "X-Requested-With": "XMLHttpRequest"
-    };
 
     BaseOptions options = BaseOptions(
         baseUrl: Configuration().middlewareHost,
@@ -40,7 +37,7 @@ class SqlQueryHelper {
     } on DioException catch (e) {
       LoginResult exception = LoginResult(
           responseCode: 401,
-          description: {"error": "Username/password is incorrect"});
+          description: {"error": e.message});
       return exception;
     }
   }
@@ -551,7 +548,8 @@ class SqlQueryHelper {
         return CompareModel();
       }
       return CompareModel.fromJson(request.data);
-    } on DioException catch (e) {
+    } on DioException {
+
       return CompareModel();
     }
   }
@@ -615,6 +613,7 @@ class SqlQueryHelper {
       String newName,
       int newVer,
       String newType) async {
+    // attempts to refresh token if expired mid-execution
     String testBearer = bearer;
     if (!await checkAuth(testBearer)) {
       var user = await refreshToken();
@@ -630,7 +629,7 @@ class SqlQueryHelper {
     };
     try {
       Map<String, String> headers = {
-        HttpHeaders.authorizationHeader: 'Bearer $bearer'
+        HttpHeaders.authorizationHeader: 'Bearer $testBearer'
       };
 
       Options options = Options(
@@ -644,6 +643,33 @@ class SqlQueryHelper {
     } on DioException {
       return "";
     }
-    return "";
+  }
+
+  Future<ListEventLogModel> getEventLogs(String bearer) async {
+    // attempts to refresh token if expired mid-execution
+    String refreshBearer = bearer;
+    if (!await checkAuth(refreshBearer)) {
+      var user = await refreshToken();
+      refreshBearer = user.loginData?.accessToken ?? '';
+    }
+    Map<String, String> headers = {
+      HttpHeaders.authorizationHeader: 'Bearer $refreshBearer'
+    };
+    try {
+      Options options = Options(
+          method: 'GET',
+          contentType: 'application/json',
+          headers: headers,
+          responseType: ResponseType.json);
+      var request = await dio.get('/xc/logs', options: options);
+      List<EventLogModel> model = [];
+      for (var each in request.data) {
+        model.add(EventLogModel.fromJson(each));
+      }
+      return ListEventLogModel(
+          responseCode: request.statusCode ?? 200, eventLogs: model);
+    } on DioException catch (e) {
+      return ListEventLogModel(responseCode: e.response?.statusCode ?? 400);
+    }
   }
 }

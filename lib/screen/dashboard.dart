@@ -116,8 +116,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           return SizedBox();
         }
       case Pages.eventLogs:
-        return FloatingActionButton(
-            onPressed: refreshEventLogs(), child: Icon(Icons.refresh));
+        return SizedBox();
+        // return FloatingActionButton(
+        //     onPressed: refreshEventLogs, child: Icon(Icons.refresh));
       default:
         if (isAdmin) {
           return FloatingActionButton.extended(
@@ -131,7 +132,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Function() refreshEventLogs() {
-    return () {}; //todo: implement
+    return () => EventLogDashboardState().callback;
   }
 
   Function() newUserFunction() {
