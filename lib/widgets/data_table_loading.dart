@@ -10,8 +10,11 @@ class DataTableLoading extends StatelessWidget {
         sortColumnIndex: 1,
         sortAscending: false,
         columns: [
+          DataColumn(
+              label: Expanded(child: Text('Timestamp')),
+              columnWidth: FixedColumnWidth(240)),
+          DataColumn(label: Expanded(child: Text('Username'))),
           DataColumn(label: Expanded(child: Text('Event Type'))),
-          DataColumn(label: Expanded(child: Text('Timestamp'))),
           DataColumn(label: Expanded(child: Text('Environment'))),
           DataColumn(
               label: Expanded(
@@ -23,7 +26,7 @@ class DataTableLoading extends StatelessWidget {
           DataColumn(
               label: Text('Target\nVersion', textAlign: TextAlign.center),
               numeric: true),
-          DataColumn(label: Text('Description'))
+          DataColumn(label: Text('Description'), columnWidth: FlexColumnWidth())
         ],
         showCheckboxColumn: true,
         onSelectAll: (_) {},
@@ -59,33 +62,6 @@ class DataTableLoading extends StatelessWidget {
               highlightColor: Colors.grey.shade100,
               child: ShimmerContainer(),
             )),
-          ]),
-          DataRow(cells: [
-            DataCell(Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
-              child: ShimmerContainer(),
-            )),
-            DataCell(Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
-              child: ShimmerContainer(),
-            )),
-            DataCell(Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
-              child: ShimmerContainer(),
-            )),
-            DataCell(Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
-              child: ShimmerContainer(),
-            )),
-            DataCell(Shimmer.fromColors(
-              baseColor: Colors.grey.shade300,
-              highlightColor: Colors.grey.shade100,
-              child: ShimmerContainer(),
-            )),
             DataCell(Shimmer.fromColors(
               baseColor: Colors.grey.shade300,
               highlightColor: Colors.grey.shade100,
@@ -123,8 +99,55 @@ class DataTableLoading extends StatelessWidget {
               highlightColor: Colors.grey.shade100,
               child: ShimmerContainer(),
             )),
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
           ]),
           DataRow(cells: [
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
+          ]),
+          DataRow(cells: [
+            DataCell(Shimmer.fromColors(
+              baseColor: Colors.grey.shade300,
+              highlightColor: Colors.grey.shade100,
+              child: ShimmerContainer(),
+            )),
             DataCell(Shimmer.fromColors(
               baseColor: Colors.grey.shade300,
               highlightColor: Colors.grey.shade100,

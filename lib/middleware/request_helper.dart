@@ -16,14 +16,13 @@ class RequestHelper {
     if (fullName == null) {
       return "";
     }
-    String localName = fullName ?? "Not Available";
+    String localName = fullName;
     var name = localName.split(' ');
     String initials = "";
     initials += name[0].substring(0, 0);
     if (name.length > 1) {
       initials += name[name.length-1].substring(0, 0);
     }
-    print(initials);
     return initials;
   }
 }

@@ -1,4 +1,3 @@
-import 'package:f5xc_tool/model/main_model.dart';
 
 class ListTcpLBVersionModel {
   final int responseCode;

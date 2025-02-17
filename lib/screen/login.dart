@@ -34,6 +34,23 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void callback(LoginState state, LoginResult? result) {
+    if (state == LoginState.fail) {
+      showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: Text("Login failed"),
+              content: Text(
+                  '${result?.description?["detail"] ?? "Failed to login due to unexpected error. \n"
+                      "Code: ${result?.responseCode ?? 400}"}'),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Close'))
+              ],
+            );
+          });
+    }
     setState(() {
       loginState = state;
       if (result != null) {
@@ -49,15 +66,17 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
+        child: ListView(
+          shrinkWrap: true,
+          // mainAxisSize: MainAxisSize.min,
+          // mainAxisAlignment: MainAxisAlignment.center,
+          // crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            statusLogin(loginState, loginResult),
+            SizedBox.square(child: statusLogin(loginState, loginResult), dimension: MediaQuery.of(context).size.width * 0.23,),
             Text(
               "Login",
               style: Theme.of(context).textTheme.headlineLarge,
+              textAlign: TextAlign.center,
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),
@@ -148,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
               'Login failed. Please check your username/password.',
               style: Theme.of(context).textTheme.headlineMedium,
             ),
-            Text('Error log: ${loginResult.description}')
+            Text('Error: ${loginResult.description?["detail"]}')
           ],
         );
     }
@@ -191,6 +210,14 @@ class _LoginButtonState extends State<LoginButton> {
 
 onLogin(BuildContext context, Function callback, String username,
     String password, FlutterSecureStorage storage) async {
+  LoginResult empty = LoginResult(
+      responseCode: 400,
+      description: {"detail": "Username/password cannot be empty."},
+      loginData: LoginModel());
+  if (username.isEmpty || password.isEmpty) {
+    callback(LoginState.fail, empty);
+    return;
+  }
   LoginResult login = await SqlQueryHelper().login(username, password);
   if (login.responseCode == 200) {
     callback(LoginState.success, login);
@@ -202,20 +229,4 @@ onLogin(BuildContext context, Function callback, String username,
   } else {
     callback(LoginState.fail, login);
   }
-
-  // await SqlQueryHelper().login(username, password).then((loginResult) {
-  //   if (loginResult.result == 200) {
-  //     //todo: pindah window
-  //     print('Login success');
-  //   } else {
-  //     throw Exception(loginResult.user!.username);
-  //   }
-  // });
-  // var hashed = PasswordHash().encryptPassword(password);
-  // await storage.write(
-  //     key: Configuration().KEY_AUTH,
-  //     value: base64Encode(utf8.encode("$username:$hashed")));
-  // if (context.mounted) {
-  //   Navigator.pushNamedAndRemoveUntil(context, '/dashboard', (_) => false);
-  // }
 }

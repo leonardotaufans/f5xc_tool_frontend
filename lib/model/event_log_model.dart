@@ -8,6 +8,7 @@ class ListEventLogModel {
 
 class EventLogModel {
   int? timestamp;
+  String? user;
   int? previousVersion;
   int? uid;
   String? description;
@@ -17,6 +18,7 @@ class EventLogModel {
 
   EventLogModel(
       {this.timestamp,
+      this.user,
       this.previousVersion,
       this.uid,
       this.description,
@@ -26,6 +28,7 @@ class EventLogModel {
 
   EventLogModel.fromJson(Map<String, dynamic> json) {
     timestamp = json['timestamp'];
+    user = json['user'];
     previousVersion = json['previous_version'];
     uid = json['uid'];
     description = json['description'];
@@ -37,6 +40,7 @@ class EventLogModel {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
     data['timestamp'] = timestamp;
+    data['user'] = user;
     data['previous_version'] = previousVersion;
     data['uid'] = uid;
     data['description'] = description;

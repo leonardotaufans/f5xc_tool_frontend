@@ -1,5 +1,5 @@
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
-import 'package:f5xc_tool/model/http_lb_revision_model.dart';
+import 'package:f5xc_tool/model/snapshot_model.dart';
 import 'package:flutter/material.dart';
 
 class SnapshotDialog extends StatefulWidget {
@@ -16,38 +16,37 @@ class _SnapshotDialogState extends State<SnapshotDialog> {
 
   @override
   Widget build(BuildContext context) {
-    // return WillPopScope(
-    //   onWillPop: () async {
-    //     ListRevisionModel model = await snapshot();
-    //     if (model.responseCode > 201)
-    //   },
-    // );
+    // ignore: deprecated_member_use
     return WillPopScope(
       onWillPop: () async {
         final NavigatorState navigator = Navigator.of(context);
         await snapshot().then((value) {
-          print(value);
           navigator.pop();
         });
         return true;
       },
       child: AlertDialog(
-        content: Flex(
-          direction: Axis.horizontal,
-          children: [
-            SizedBox(width: 60, height: 60, child: CircularProgressIndicator()),
-            VerticalDivider(),
-            Expanded(
-              child: Text('Please wait. \nUpdating database...'),
-            )
-          ],
+        title: Text('Snapshot'),
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.2,
+          height: MediaQuery.of(context).size.height * 0.1,
+          child: Flex(
+            direction: Axis.horizontal,
+            children: [
+              SizedBox(
+                  width: 60, height: 60, child: CircularProgressIndicator()),
+              SizedBox(width: 8,),
+              Expanded(
+                child: Text('Please wait. \nUpdating database...'),
+              )
+            ],
+          ),
         ),
       ),
     );
   }
 
-  Future<ListRevisionModelHTTPLB> snapshot() async {
-    print('snapshot doko???');
+  Future<SnapshotResult> snapshot() async {
     return await SqlQueryHelper().snapshotManual(widget.bearer);
   }
 }

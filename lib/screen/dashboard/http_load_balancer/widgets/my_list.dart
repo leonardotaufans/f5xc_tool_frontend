@@ -1,4 +1,5 @@
-import 'package:code_text_field/code_text_field.dart';
+import 'dart:async';
+
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/middleware/request_helper.dart';
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
@@ -8,20 +9,19 @@ import 'package:f5xc_tool/model/http_lb_version_model.dart';
 import 'package:f5xc_tool/screen/dashboard/http_load_balancer/widgets/http_changes_dialog.dart';
 import 'package:f5xc_tool/screen/dashboard/http_load_balancer/widgets/replace_version_dialog.dart';
 import 'package:f5xc_tool/screen/dashboard/http_load_balancer/widgets/revision_dialog.dart';
+import 'package:f5xc_tool/widgets/alert_tbd.dart';
 import 'package:f5xc_tool/widgets/list_tile_shimmer.dart';
 import 'package:f5xc_tool/widgets/user_expansion_tile.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:highlight/languages/json.dart';
 
 class MyList extends StatefulWidget {
-  const MyList(
-      {super.key,
-      required this.modelList,
-      required this.policyType,
-      required this.user});
+  const MyList({
+    super.key,
+    required this.modelList,
+    required this.policyType,
+    required this.user,
+  });
 
   final PolicyType policyType;
   final ListHttpLBVersionModel modelList;
@@ -34,9 +34,27 @@ class MyList extends StatefulWidget {
 class _MyListState extends State<MyList> {
   late FlutterSecureStorage storage;
   late String auth = '';
-
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.modelList.responseCode > 200) {
+        showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return AlertDialog(
+                actions: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.pushReplacementNamed(context, '/login'),
+                    child: Text('Login'),
+                  )
+                ],
+                content: Text("You need to log back in to continue."),
+              );
+            });
+      }
+    });
     UserModel userModel = widget.user.model ?? UserModel();
     // getData();
     if (widget.modelList.responseCode > 200) {
@@ -46,12 +64,15 @@ class _MyListState extends State<MyList> {
     } else {
       List<HttpLBVersionModel> model =
           widget.modelList.versionData ?? [HttpLBVersionModel()];
+
       return ListView.builder(
           itemCount: widget.modelList.versionData!.length,
           shrinkWrap: true,
           itemBuilder: (context, index) {
+
             return Card(
               child: ExpansionTile(
+                  shape: Border(),
                   leading: AdjustedCircleAvatar(
                       backgroundColor: model[index].environment == "staging"
                           ? Colors.blueGrey
@@ -71,10 +92,6 @@ class _MyListState extends State<MyList> {
                       Text('Active version: ${model[index].currentVersion}'),
                   children: [
                     ListTile(
-                      leading: Icon(
-                        Icons.subdirectory_arrow_right_rounded,
-                        color: Colors.black.withAlpha(100),
-                      ),
                       title: FutureBuilder(
                           future: _buildChildren(model[index]),
                           builder: (context, snapshot) {
@@ -84,8 +101,26 @@ class _MyListState extends State<MyList> {
                                     ListRevisionModelHTTPLB(responseCode: 400);
                                 return _buildRevisionList(
                                     data, model[index], userModel);
+                              case ConnectionState.waiting:
+                                return ListView(
+                                  shrinkWrap: true,
+                                  children: [
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                  ],
+                                );
                               default:
-                                return Container();
+                                return ListView(
+                                  shrinkWrap: true,
+                                  children: [
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                  ],
+                                );
                             }
                           }),
                     )
@@ -107,8 +142,12 @@ class _MyListState extends State<MyList> {
               title: Text('Error was found in building list.'),
             );
           }
+          if (modelList.isEmpty) {
+            return ListTileShimmer();
+          }
           bool active = modelList[index].version == model.currentVersion;
           return ExpansionTile(
+            shape: Border(left: BorderSide(color: Colors.black12)),
             childrenPadding: EdgeInsets.only(left: 24),
             leading: Tooltip(
               message: active ? "Active Policy" : "Inactive Policy",
@@ -161,6 +200,24 @@ class _MyListState extends State<MyList> {
                         });
                   }),
               ListTile(
+                  title: Text('Remarks'),
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Remarks'),
+                            content: Text('${modelList[index].remarks}'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text('Close'),
+                              )
+                            ],
+                          );
+                        });
+                  }),
+              ListTile(
                 title: Text('Load Balancer Configuration'),
                 trailing: Icon(Icons.navigate_next),
                 onTap: () {
@@ -203,18 +260,15 @@ class _MyListState extends State<MyList> {
                 height: 48,
                 child: Row(
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      label: Text('Compare...'),
-                      icon: Icon(Icons.account_tree),
-                    ),
                     SizedBox(
                       width: 8,
                     ),
                     Visibility(
                         visible: model.environment == "staging",
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => showDialog(
+                              context: context,
+                              builder: (context) => AlertTbd()),
                           label: Text('Promote'),
                           icon: Icon(Icons.upload_file),
                         )),
@@ -242,10 +296,8 @@ class _MyListState extends State<MyList> {
     PolicyType type = model.environment == "staging"
         ? PolicyType.staging
         : PolicyType.production;
-    // return await SqlQueryHelper()
-    //     .getAllRevisions(bearer, model.appName ?? "", type);
 
-    return SqlQueryHelper()
+    return await SqlQueryHelper()
         .getAllHttpRevisions(bearer, model.appName ?? "", type);
   }
 

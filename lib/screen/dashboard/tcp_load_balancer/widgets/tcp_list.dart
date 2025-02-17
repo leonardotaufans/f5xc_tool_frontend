@@ -1,21 +1,16 @@
-import 'package:code_text_field/code_text_field.dart';
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/middleware/request_helper.dart';
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
-import 'package:f5xc_tool/model/http_lb_revision_model.dart';
 import 'package:f5xc_tool/model/tcp_lb_model.dart';
 import 'package:f5xc_tool/model/user_model.dart';
-import 'package:f5xc_tool/model/http_lb_version_model.dart';
-import 'package:f5xc_tool/screen/dashboard/http_load_balancer/widgets/replace_version_dialog.dart';
 import 'package:f5xc_tool/screen/dashboard/http_load_balancer/widgets/revision_dialog.dart';
 import 'package:f5xc_tool/screen/dashboard/tcp_load_balancer/widgets/replace_tcp_version_dialog.dart';
 import 'package:f5xc_tool/screen/dashboard/tcp_load_balancer/widgets/tcp_changes_dialog.dart';
+import 'package:f5xc_tool/widgets/alert_tbd.dart';
+import 'package:f5xc_tool/widgets/list_tile_shimmer.dart';
 import 'package:f5xc_tool/widgets/user_expansion_tile.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:highlight/languages/json.dart';
 
 class TcpList extends StatefulWidget {
   const TcpList(
@@ -38,12 +33,32 @@ class _TcpListState extends State<TcpList> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (widget.modelList.responseCode > 200) {
+        showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return AlertDialog(
+                actions: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.pushReplacementNamed(context, '/login'),
+                    child: Text('Login'),
+                  )
+                ],
+                content: Text("You need to log back in to continue."),
+              );
+            });
+      }
+    });
     UserModel userModel = widget.user.model ?? UserModel();
     // getData();
     if (widget.modelList.responseCode > 200) {
+
       return Text('Error ${widget.modelList.responseCode}');
     } else if (widget.modelList.modelList == null) {
-      return Text('Version Data is empty');
+      return ListTileShimmer();
     } else {
       List<TcpLBVersionModel> model =
           widget.modelList.modelList ?? [TcpLBVersionModel()];
@@ -53,6 +68,7 @@ class _TcpListState extends State<TcpList> {
           itemBuilder: (context, index) {
             return Card(
               child: ExpansionTile(
+                  shape: Border(),
                   leading: AdjustedCircleAvatar(
                       backgroundColor: model[index].environment == "staging"
                           ? Colors.blueGrey
@@ -67,15 +83,11 @@ class _TcpListState extends State<TcpList> {
                           )
                         ],
                       )),
-                  title: Text('${model[index].appName}'),
+                  title: Text('${model[index].appName}'.toUpperCase()),
                   subtitle:
                       Text('Active version: ${model[index].currentVersion}'),
                   children: [
                     ListTile(
-                      leading: Icon(
-                        Icons.subdirectory_arrow_right_rounded,
-                        color: Colors.black.withAlpha(100),
-                      ),
                       title: FutureBuilder(
                           future: _buildChildren(model[index]),
                           builder: (context, snapshot) {
@@ -85,8 +97,26 @@ class _TcpListState extends State<TcpList> {
                                     ListTcpLBRevisionModel(responseCode: 400);
                                 return _buildRevisionList(
                                     data, model[index], userModel);
+                              case ConnectionState.waiting:
+                                return ListView(
+                                  shrinkWrap: true,
+                                  children: [
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                  ],
+                                );
                               default:
-                                return Container();
+                                return ListView(
+                                  shrinkWrap: true,
+                                  children: [
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                    ListTileShimmer(),
+                                  ],
+                                );
                             }
                           }),
                     )
@@ -108,8 +138,12 @@ class _TcpListState extends State<TcpList> {
               title: Text('Error was found in building list.'),
             );
           }
+          if (modelList.isEmpty) {
+            return ListTileShimmer();
+          }
           bool active = modelList[index].version == model.currentVersion;
           return ExpansionTile(
+            shape: Border(left: BorderSide(color: Colors.black12)),
             childrenPadding: EdgeInsets.only(left: 24),
             leading: Tooltip(
               message: active ? "Active Policy" : "Inactive Policy",
@@ -124,7 +158,7 @@ class _TcpListState extends State<TcpList> {
               ),
             ),
             title: Text(
-                '${modelList[index].appName} Version ${modelList[index].version}'),
+                '${modelList[index].appName!.toUpperCase()} Version ${modelList[index].version}'),
             subtitle: Text(
                 'Date modified: ${RequestHelper().dateTimeFromEpoch((modelList[index].timestamp!), 'Asia/Singapore')} GMT +8'),
             children: [
@@ -147,7 +181,7 @@ class _TcpListState extends State<TcpList> {
                                 child: TCPChangesDialog(
                                     revision: modelList[index],
                                     environment:
-                                    model.environment ?? "production"),
+                                        model.environment ?? "production"),
                               ),
                             ),
                             actions: [
@@ -156,6 +190,24 @@ class _TcpListState extends State<TcpList> {
                                 onPressed: () {
                                   Navigator.pop(context);
                                 },
+                              )
+                            ],
+                          );
+                        });
+                  }),
+              ListTile(
+                  title: Text('Remarks'),
+                  onTap: () {
+                    showDialog(
+                        context: context,
+                        builder: (context) {
+                          return AlertDialog(
+                            title: Text('Remarks'),
+                            content: Text('${modelList[index].remarks}'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: Text('Close'),
                               )
                             ],
                           );
@@ -204,18 +256,15 @@ class _TcpListState extends State<TcpList> {
                 height: 48,
                 child: Row(
                   children: [
-                    ElevatedButton.icon(
-                      onPressed: () {},
-                      label: Text('Compare...'),
-                      icon: Icon(Icons.account_tree),
-                    ),
                     SizedBox(
                       width: 8,
                     ),
                     Visibility(
                         visible: model.environment == "staging",
                         child: ElevatedButton.icon(
-                          onPressed: () {},
+                          onPressed: () => showDialog(
+                              context: context,
+                              builder: (context) => AlertTbd()),
                           label: Text('Promote'),
                           icon: Icon(Icons.upload_file),
                         )),
@@ -242,10 +291,8 @@ class _TcpListState extends State<TcpList> {
     PolicyType type = model.environment == "staging"
         ? PolicyType.staging
         : PolicyType.production;
-    // return await SqlQueryHelper()
-    //     .getAllRevisions(bearer, model.appName ?? "", type);
 
-    return SqlQueryHelper()
+    return await SqlQueryHelper()
         .getAllTcpRevisions(bearer, model.appName ?? "", type);
   }
 

@@ -26,14 +26,12 @@ class EventLogDashboardState extends State<EventLogDashboard> {
   }
 
   getEventLogAsStream() async {
-    print('refresh');
     ListEventLogModel event = await getEventLogs();
     _streamController.sink.add(event);
   }
 
   void callback() {
-    print('callback');
-    getEventLogs().then((val){
+    getEventLogs().then((val) {
       setState(() {
         _streamController.sink.add(val);
       });
@@ -42,7 +40,28 @@ class EventLogDashboardState extends State<EventLogDashboard> {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (model.responseCode == 401) {
+        showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) {
+              return AlertDialog(
+                actions: [
+                  TextButton(
+                    onPressed: () =>
+                        Navigator.pushReplacementNamed(context, '/login'),
+                    child: Text('Login'),
+                  )
+                ],
+                content: Text("You need to log back in to continue."),
+              );
+            });
+      }
+    });
+
     return ListView(
+      padding: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       children: [
         SizedBox(
           height: 30,
@@ -85,8 +104,12 @@ class EventLogDashboardState extends State<EventLogDashboard> {
                       sortColumnIndex: 1,
                       sortAscending: false,
                       columns: [
-                        DataColumn(label: Expanded(child: Text('Event Type'))),
                         DataColumn(label: Expanded(child: Text('Timestamp'))),
+                        DataColumn(
+                            label: Expanded(
+                          child: Text('Username'),
+                        )),
+                        DataColumn(label: Expanded(child: Text('Event Type'))),
                         DataColumn(label: Expanded(child: Text('Environment'))),
                         DataColumn(
                             label: Expanded(
@@ -99,72 +122,39 @@ class EventLogDashboardState extends State<EventLogDashboard> {
                             label: Text('Target\nVersion',
                                 textAlign: TextAlign.center),
                             numeric: true),
-                        DataColumn(label: Text('Description'))
+                        DataColumn(
+                            columnWidth: FlexColumnWidth(),
+                            label: Text('Description'))
                       ],
                       showCheckboxColumn: true,
                       onSelectAll: (_) {},
                       rows: models
                           .map((val) => DataRow(cells: [
-                                DataCell(Text('${val.eventType}')),
                                 DataCell(Text(
                                     '${RequestHelper().dateTimeFromEpoch(val.timestamp ?? 1, 'Asia/Singapore')} GMT +8')),
+                                DataCell(Text("${val.user}")),
+                                DataCell(Text('${val.eventType}')),
                                 DataCell(Text('${val.environment}')),
                                 DataCell(Text('${val.previousVersion}')),
                                 DataCell(Text('${val.targetVersion}')),
-                                DataCell(Text('${val.description}')),
+                                DataCell(Text('${val.description}'), onTap: () {
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                            title: Text('Event Log Details'),
+                                            content: Text('${val.description}'),
+                                            actions: [
+                                              TextButton(
+                                                  onPressed: () =>
+                                                      Navigator.pop(context),
+                                                  child: Text('Close'))
+                                            ],
+                                          ));
+                                }),
                               ]))
                           .toList());
               }
             }),
-        // Text('Future'),
-        // FutureBuilder(
-        //     future: futureModel,
-        //     initialData: model,
-        //     builder: (context, snapshot) {
-        //       switch (snapshot.connectionState) {
-        //         case ConnectionState.done:
-        //           List<EventLogModel> models = snapshot.data?.eventLogs ?? [];
-        //           return DataTable(
-        //               sortColumnIndex: 1,
-        //               sortAscending: false,
-        //               columns: [
-        //                 DataColumn(label: Expanded(child: Text('Event Type'))),
-        //                 DataColumn(label: Expanded(child: Text('Timestamp'))),
-        //                 DataColumn(label: Expanded(child: Text('Environment'))),
-        //                 DataColumn(
-        //                     label: Expanded(
-        //                         child: Text(
-        //                       'Previous\nVersion',
-        //                       textAlign: TextAlign.center,
-        //                     )),
-        //                     numeric: true),
-        //                 DataColumn(
-        //                     label: Text('Target\nVersion',
-        //                         textAlign: TextAlign.center),
-        //                     numeric: true),
-        //                 DataColumn(label: Text('Description'))
-        //               ],
-        //               showCheckboxColumn: true,
-        //               onSelectAll: (_) {},
-        //               rows: models
-        //                   .map((val) => DataRow(cells: [
-        //                         DataCell(Text('${val.eventType}')),
-        //                         DataCell(Text(
-        //                             '${RequestHelper().dateTimeFromEpoch(val.timestamp ?? 1, 'Asia/Singapore')} GMT +8')),
-        //                         DataCell(Text('${val.environment}')),
-        //                         DataCell(Text('${val.previousVersion}')),
-        //                         DataCell(Text('${val.targetVersion}')),
-        //                         DataCell(Text('${val.description}')),
-        //                       ]))
-        //                   .toList());
-        //         case ConnectionState.waiting:
-        //           return Placeholder(); //todo:
-        //         case ConnectionState.none:
-        //           return Text('None');
-        //         default:
-        //           return Text('Default');
-        //       }
-        //     }),
       ],
     );
   }

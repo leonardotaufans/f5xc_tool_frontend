@@ -1,14 +1,18 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
 import 'package:f5xc_tool/model/auth_model.dart';
-import 'package:f5xc_tool/model/http_lb_revision_model.dart';
+import 'package:f5xc_tool/model/snapshot_model.dart';
 import 'package:f5xc_tool/screen/dashboard/cdn_load_balancer/cdn_dashboard.dart';
 import 'package:f5xc_tool/screen/dashboard/tcp_load_balancer/tcp_dashboard.dart';
 import 'package:f5xc_tool/screen/dashboard/widgets/my_nav_rail.dart';
 import 'package:f5xc_tool/screen/dashboard/widgets/snapshot_dialog.dart';
+import 'package:f5xc_tool/screen/dashboard/widgets/snapshot_remarks_dialog.dart';
 import 'package:f5xc_tool/screen/diff/policy_diff_frag.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'event_logs/event_log_frag.dart';
 import 'dashboard/http_load_balancer/http_dashboard.dart';
@@ -25,7 +29,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   var _selectedIndex = 0;
   late FlutterSecureStorage _storage;
   late String _authKey = '';
-  late AuthModel model;
+  late AuthModel model = AuthModel(user: 'none', role: 'guest');
   bool isAdmin = false;
 
   @override
@@ -36,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (value.auth != null) {
         setState(() {
           isAdmin = (value.auth!.role == UserRole.admin);
+          model = value.auth ?? AuthModel(user: 'none', role: 'guest');
         });
       }
     });
@@ -58,10 +63,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          PagesName.number[_selectedIndex].toUpperCase(),
-          style: Theme.of(context).textTheme.bodyLarge,
-        ),
+        backgroundColor: isAdmin ? Colors.red.shade300 : Colors.blue.shade300,
+        title: RichText(
+            text: TextSpan(children: [
+          TextSpan(
+              text: '${model.user}@F5XC~${isAdmin ? "#" : "\$"} ',
+              style: GoogleFonts.sourceCodePro()),
+          TextSpan(text: PagesName.number[_selectedIndex].toUpperCase())
+        ])),
         elevation: 1,
       ),
       body: Row(
@@ -78,9 +87,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Future<ListRevisionModelHTTPLB> snapshot() async {
+  Future<SnapshotResult> snapshot() async {
     String authKey = await _storage.read(key: 'auth') ?? "";
-    print('snapshot doko??? authKey: $authKey');
     return SqlQueryHelper().snapshotManual(authKey);
   }
 
@@ -107,18 +115,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         // Policy Diff
         return SizedBox();
       case Pages.users:
-        if (isAdmin) {
-          return FloatingActionButton.extended(
-              icon: Icon(Icons.person_add),
-              onPressed: newUserFunction(),
-              label: Text('New User'));
-        } else {
-          return SizedBox();
-        }
+        return SizedBox();
       case Pages.eventLogs:
         return SizedBox();
-        // return FloatingActionButton(
-        //     onPressed: refreshEventLogs, child: Icon(Icons.refresh));
+      // return FloatingActionButton(
+      //     onPressed: refreshEventLogs, child: Icon(Icons.refresh));
       default:
         if (isAdmin) {
           return FloatingActionButton.extended(
@@ -133,10 +134,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Function() refreshEventLogs() {
     return () => EventLogDashboardState().callback;
-  }
-
-  Function() newUserFunction() {
-    return () {}; //todo: implement
   }
 
   Function() fabSnapshot() {
@@ -156,6 +153,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         if (context.mounted) {
           // PolicyDashboardState().callback();
           Navigator.pop(context);
+          showDialog(
+              context: context,
+              builder: (context) {
+                print("detail: ${value.detail}");
+                return SnapshotRemarksDialog(
+                    model: value.snapshot ??
+                        SnapshotModel(
+                            result: 'Error in capturing snapshot: Assert!'));
+              });
         }
       });
     };

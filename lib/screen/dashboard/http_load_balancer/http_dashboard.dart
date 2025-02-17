@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
 import 'package:f5xc_tool/model/user_model.dart';
 import 'package:f5xc_tool/model/http_lb_version_model.dart';
@@ -17,10 +19,18 @@ class HttpPolicyDashboard extends StatefulWidget {
 }
 
 class HttpPolicyDashboardState extends State<HttpPolicyDashboard> {
-  late ListHttpLBVersionModel _stagingModel = ListHttpLBVersionModel(responseCode: 100);
-  late ListHttpLBVersionModel _productionModel = ListHttpLBVersionModel(responseCode: 100);
+  late ListHttpLBVersionModel _stagingModel =
+      ListHttpLBVersionModel(responseCode: 100);
+  late ListHttpLBVersionModel _productionModel =
+      ListHttpLBVersionModel(responseCode: 100);
   late UserResponse _user = UserResponse(statusCode: 100);
   late String timezone = 'Asia/Singapore';
+  final SqlQueryHelper sqlQuery = SqlQueryHelper();
+  @override
+  void initState() {
+    super.initState();
+    getMyself().then((val) => setState(() => _user = val));
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,7 +54,9 @@ class HttpPolicyDashboardState extends State<HttpPolicyDashboard> {
                     const SizedBox(
                       width: 16,
                     ),
-                    IconButton.filledTonal(
+                    Tooltip(
+                      message: 'Refresh Table',
+                      child: OutlinedButton.icon(
                         onPressed: () {
                           getStagingData().then((val) {
                             setState(() {
@@ -52,8 +64,10 @@ class HttpPolicyDashboardState extends State<HttpPolicyDashboard> {
                             });
                           });
                         },
+                        label: Text('Refresh'),
                         icon: const Icon(Icons.refresh),
-                        tooltip: 'Refresh Table'),
+                      ),
+                    )
                   ],
                 ),
               ),
@@ -75,16 +89,19 @@ class HttpPolicyDashboardState extends State<HttpPolicyDashboard> {
                     const SizedBox(
                       width: 16,
                     ),
-                    IconButton.filledTonal(
-                        onPressed: () {
-                          getProductionData().then((val) {
-                            setState(() {
-                              _productionModel = val;
+                    Tooltip(
+                      message: 'Refresh Table',
+                      child: OutlinedButton.icon(
+                          label: Text('Refresh'),
+                          onPressed: () {
+                            getProductionData().then((val) {
+                              setState(() {
+                                _productionModel = val;
+                              });
                             });
-                          });
-                        },
-                        icon: const Icon(Icons.refresh),
-                        tooltip: 'Refresh Table'),
+                          },
+                          icon: const Icon(Icons.refresh)),
+                    ),
                   ],
                 ),
               ),
@@ -110,16 +127,14 @@ class HttpPolicyDashboardState extends State<HttpPolicyDashboard> {
     );
   }
 
-  Widget myBottomSheet(BuildContext context, String appId) {
-    return Container();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    getStagingData().then((val) => setState(() => _stagingModel = val));
-    getProductionData().then((val) => setState(() => _productionModel = val));
-    getMyself().then((val) => setState(() => _user = val));
+  forceLogout() {
+    if (context.mounted) {
+      showDialog(context: context, builder: (context) {
+        return AlertDialog(
+          content: Text('You need to log back in to continue.'),
+        );
+      });
+    }
   }
 
   void callback() {
@@ -132,7 +147,9 @@ class HttpPolicyDashboardState extends State<HttpPolicyDashboard> {
   Future<ListHttpLBVersionModel> getStagingData() async {
     FlutterSecureStorage storage = FlutterSecureStorage();
     String bearer = await storage.read(key: 'auth') ?? "";
-    return SqlQueryHelper().getHttpVersion(PolicyType.staging, bearer);
+    var version =
+        await SqlQueryHelper().getHttpVersion(PolicyType.staging, bearer);
+    return version;
   }
 
   Future<ListHttpLBVersionModel> getProductionData() async {

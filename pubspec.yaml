@@ -49,6 +49,7 @@ dependencies:
   fsoft_diff_patch: ^0.1.1
   retry: ^3.1.2
   shimmer: ^3.0.0
+  after_layout: ^1.2.0
 
 dev_dependencies:
   flutter_test:

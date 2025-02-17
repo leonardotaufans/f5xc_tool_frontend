@@ -10,6 +10,7 @@ import 'package:f5xc_tool/model/event_log_model.dart';
 import 'package:f5xc_tool/model/login_model.dart';
 import 'package:f5xc_tool/model/http_lb_revision_model.dart';
 import 'package:f5xc_tool/model/model_compare.dart';
+import 'package:f5xc_tool/model/snapshot_model.dart';
 import 'package:f5xc_tool/model/tcp_lb_model.dart';
 import 'package:f5xc_tool/model/user_model.dart';
 import 'package:f5xc_tool/model/http_lb_version_model.dart';
@@ -17,7 +18,9 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class SqlQueryHelper {
   Dio dio = Dio(BaseOptions(
-      baseUrl: Configuration().middlewareHost, validateStatus: (_) => true));
+      baseUrl: Configuration().middlewareHost,
+      validateStatus: (_) => true,
+      receiveDataWhenStatusError: true));
   int maxRetries = 3;
 
   // Login
@@ -35,10 +38,9 @@ class SqlQueryHelper {
       return LoginResult(
           responseCode: 200, loginData: LoginModel.fromJson(req.data));
     } on DioException catch (e) {
-      LoginResult exception = LoginResult(
-          responseCode: 401,
-          description: {"error": e.message});
-      return exception;
+      return LoginResult(
+          responseCode: e.response?.statusCode ?? 400,
+          description: e.response?.data ?? e.error);
     }
   }
 
@@ -49,16 +51,14 @@ class SqlQueryHelper {
     Map<String, String> header = {
       HttpHeaders.authorizationHeader: "Bearer $oldToken"
     };
-    BaseOptions options = BaseOptions(
-        baseUrl: Configuration().middlewareHost,
+    Options options = Options(
         contentType: 'application/json',
         headers: header,
         method: 'POST');
-    Dio dio = Dio(options);
     try {
-      var req = await dio.post('/mgmt/user/refresh');
+      var req = await dio.post('/mgmt/user/refresh', options: options);
       LoginModel model = LoginModel.fromJson(req.data);
-      storage.write(key: 'auth', value: model.accessToken ?? "");
+      await storage.write(key: 'auth', value: model.accessToken ?? "");
       return LoginResult(
           responseCode: 200, loginData: LoginModel.fromJson(req.data));
     } on DioException {
@@ -172,8 +172,14 @@ class SqlQueryHelper {
       return ListRevisionModelHTTPLB(
           responseCode: 400, errorMessage: "App name is missing");
     }
+    String newBearer = bearer;
+    if (!await checkAuth(newBearer)) {
+      await refreshToken();
+      newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+    }
+
     Map<String, String> headers = {
-      HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      HttpHeaders.authorizationHeader: 'Bearer $newBearer'
     };
     Map<String, dynamic> queryParameters = {};
     String env = "";
@@ -215,8 +221,14 @@ class SqlQueryHelper {
     if (bearer.isEmpty) {
       return exception;
     }
+    String newBearer = bearer;
+    if (!await checkAuth(newBearer)) {
+      await refreshToken();
+      newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+    }
+
     Map<String, String> headers = {
-      HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      HttpHeaders.authorizationHeader: 'Bearer $newBearer'
     };
     Map<String, dynamic> queryParameters = {};
     if (type == PolicyType.staging) {
@@ -253,8 +265,14 @@ class SqlQueryHelper {
     if (bearer.isEmpty) {
       return exception;
     }
+    String newBearer = bearer;
+    if (!await checkAuth(newBearer)) {
+      await refreshToken();
+      newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+    }
+
     Map<String, String> headers = {
-      HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      HttpHeaders.authorizationHeader: 'Bearer $newBearer'
     };
     Map<String, dynamic> queryParameters = {};
     if (type == PolicyType.staging) {
@@ -295,8 +313,14 @@ class SqlQueryHelper {
       return ListTcpLBRevisionModel(
           responseCode: 400, detail: "App name is missing");
     }
+    String newBearer = bearer;
+    if (!await checkAuth(newBearer)) {
+      await refreshToken();
+      newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+    }
+
     Map<String, String> headers = {
-      HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      HttpHeaders.authorizationHeader: 'Bearer $newBearer'
     };
     Map<String, dynamic> queryParameters = {};
     String env = "";
@@ -338,8 +362,14 @@ class SqlQueryHelper {
     if (bearer.isEmpty) {
       return exception;
     }
+    String newBearer = bearer;
+    if (!await checkAuth(newBearer)) {
+      await refreshToken();
+      newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+    }
+
     Map<String, String> headers = {
-      HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      HttpHeaders.authorizationHeader: 'Bearer $newBearer'
     };
     Map<String, dynamic> queryParameters = {};
     if (type == PolicyType.staging) {
@@ -380,8 +410,14 @@ class SqlQueryHelper {
       return ListCDNLBRevisionModel(
           responseCode: 400, detail: "App name is missing");
     }
+    String newBearer = bearer;
+    if (!await checkAuth(newBearer)) {
+      await refreshToken();
+      newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+    }
+
     Map<String, String> headers = {
-      HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      HttpHeaders.authorizationHeader: 'Bearer $newBearer'
     };
     Map<String, dynamic> queryParameters = {};
     String env = "";
@@ -416,29 +452,39 @@ class SqlQueryHelper {
     return ListCDNLBRevisionModel(responseCode: 200, modelList: model);
   }
 
-  Future<ListRevisionModelHTTPLB> snapshotManual(String bearer) async {
-    ListRevisionModelHTTPLB exceptions = ListRevisionModelHTTPLB(
-        responseCode: 401, errorMessage: "Bearer is missing");
+  // Snapshot
+  Future<SnapshotResult> snapshotManual(String bearer) async {
+    SnapshotResult exceptions =
+        SnapshotResult(responseCode: 401, detail: "Bearer is missing");
     if (bearer.isEmpty) {
       return exceptions;
     }
+    String newBearer = bearer;
+    if (!await checkAuth(newBearer)) {
+      await refreshToken();
+      newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+    }
+
     Map<String, String> headers = {
-      HttpHeaders.authorizationHeader: 'Bearer $bearer'
+      HttpHeaders.authorizationHeader: 'Bearer $newBearer'
     };
     Options options = Options(
         method: 'POST',
         contentType: 'application/json',
         headers: headers,
         responseType: ResponseType.json);
-    var request = await dio.post('/xc/snapshot/now', options: options);
+    var request = await dio.post('/xc/snapshot/now',
+        options:
+            options);
     if (request.statusCode! > 201) {
-      return ListRevisionModelHTTPLB(
+      return SnapshotResult(
           responseCode: request.statusCode ?? 400,
-          errorMessage: request.statusMessage);
+          detail: request.statusMessage);
     }
-    return ListRevisionModelHTTPLB(
+    return SnapshotResult(
         responseCode: request.statusCode ?? 201,
-        errorMessage: "${request.data}");
+        detail: 'Snapshot result',
+        snapshot: SnapshotModel.fromJson(request.data));
   }
 
   Future<void> replaceHttpPolicy(String bearer, String appName,
@@ -447,8 +493,14 @@ class SqlQueryHelper {
       if (bearer.isEmpty || appName.isEmpty || environment.isEmpty) {
         throw Exception("Value is missing");
       }
+      String newBearer = bearer;
+      if (!await checkAuth(newBearer)) {
+        await refreshToken();
+        newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+      }
+
       Map<String, String> headers = {
-        HttpHeaders.authorizationHeader: 'Bearer $bearer'
+        HttpHeaders.authorizationHeader: 'Bearer $newBearer'
       };
       Map<String, dynamic> body = {
         "app_name": appName,
@@ -476,8 +528,14 @@ class SqlQueryHelper {
       if (bearer.isEmpty || appName.isEmpty || environment.isEmpty) {
         throw Exception("Value is missing");
       }
+      String newBearer = bearer;
+      if (!await checkAuth(newBearer)) {
+        await refreshToken();
+        newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+      }
+
       Map<String, String> headers = {
-        HttpHeaders.authorizationHeader: 'Bearer $bearer'
+        HttpHeaders.authorizationHeader: 'Bearer $newBearer'
       };
       Map<String, dynamic> body = {
         "app_name": appName,
@@ -525,8 +583,14 @@ class SqlQueryHelper {
         throw Exception("You are not logged in?");
       }
       Map<String, dynamic> queryParams = {};
+      String newBearer = bearer;
+      if (!await checkAuth(newBearer)) {
+        await refreshToken();
+        newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+      }
+
       Map<String, String> headers = {
-        HttpHeaders.authorizationHeader: 'Bearer $bearer'
+        HttpHeaders.authorizationHeader: 'Bearer $newBearer'
       };
       queryParams.addAll({
         "new_app_name": newAppName,
@@ -549,7 +613,6 @@ class SqlQueryHelper {
       }
       return CompareModel.fromJson(request.data);
     } on DioException {
-
       return CompareModel();
     }
   }
@@ -560,8 +623,14 @@ class SqlQueryHelper {
       if (bearer.isEmpty || appName.isEmpty || environment.isEmpty) {
         throw Exception("Value is missing");
       }
+      String newBearer = bearer;
+      if (!await checkAuth(newBearer)) {
+        await refreshToken();
+        newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+      }
+
       Map<String, String> headers = {
-        HttpHeaders.authorizationHeader: 'Bearer $bearer'
+        HttpHeaders.authorizationHeader: 'Bearer $newBearer'
       };
       Map<String, dynamic> body = {
         "app_name": appName,
@@ -628,8 +697,14 @@ class SqlQueryHelper {
       "old_version": oldVer
     };
     try {
+      String newBearer = bearer;
+      if (!await checkAuth(newBearer)) {
+        await refreshToken();
+        newBearer = await FlutterSecureStorage().read(key: 'auth') ?? "";
+      }
+
       Map<String, String> headers = {
-        HttpHeaders.authorizationHeader: 'Bearer $testBearer'
+        HttpHeaders.authorizationHeader: 'Bearer $newBearer'
       };
 
       Options options = Options(
@@ -670,6 +745,35 @@ class SqlQueryHelper {
           responseCode: request.statusCode ?? 200, eventLogs: model);
     } on DioException catch (e) {
       return ListEventLogModel(responseCode: e.response?.statusCode ?? 400);
+    }
+  }
+
+  void snapshotRemarks(String bearer, String uid, String environment,
+      String path, String remarks) async {
+    String refreshBearer = bearer;
+    if (!await checkAuth(refreshBearer)) {
+      var user = await refreshToken();
+      refreshBearer = user.loginData?.accessToken ?? '';
+    }
+    Map<String, String> headers = {
+      HttpHeaders.authorizationHeader: 'Bearer $refreshBearer'
+    };
+    Options options = Options(
+        method: 'PUT',
+        contentType: 'application/json',
+        headers: headers,
+        responseType: ResponseType.json);
+    Map<String, String> queryParameter = {
+      "uid": uid,
+      "environment": environment,
+      "lb_type": path,
+      "remarks": remarks
+    };
+    try {
+      await dio.put('/xc/snapshot/remarks',
+          data: queryParameter, options: options); // still in demo
+    } on DioException {
+      throw Exception();
     }
   }
 }

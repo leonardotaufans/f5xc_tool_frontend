@@ -25,6 +25,15 @@ class Pages {
   static const int eventLogs = 5;
 }
 
+class UpdateUserRows {
+  static const fullName = "full_name";
+  static const role = "role";
+  static const email = "email";
+  static const company = "organization";
+  static const userStatus = "is_active";
+  static const password = "crypt";
+}
+
 class PagesName {
   static const httpDashboard = "HTTP Load Balancer";
   static const tcpDashboard = "TCP Load Balancer";
@@ -44,7 +53,7 @@ class PagesName {
 
 class Configuration {
   final middlewareHost = "http://localhost:8000"; //todo: change to prod
-  final KEY_AUTH = "Authorization";
+  final keyAuth = "Authorization";
 }
 
 enum LoadingProgress { none, loading, success, fail }

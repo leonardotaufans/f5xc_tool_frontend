@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:code_text_field/code_text_field.dart';
 import 'package:f5xc_tool/middleware/config.dart';
 import 'package:f5xc_tool/middleware/sql_query_helper.dart';
-import 'package:f5xc_tool/model/cdn_lb_model.dart';
 import 'package:f5xc_tool/model/model_compare.dart';
 import 'package:f5xc_tool/model/tcp_lb_model.dart';
 import 'package:flutter/material.dart';

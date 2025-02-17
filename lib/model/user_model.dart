@@ -58,3 +58,44 @@ class UserModel {
     return data;
   }
 }
+
+class UserCreate {
+  String? username;
+  String? password;
+  String? fullName;
+  String? organization;
+  bool? isActive;
+  String? email;
+  String? role;
+
+  UserCreate(
+      {this.username,
+        this.password,
+        this.fullName,
+        this.organization,
+        this.isActive,
+        this.email,
+        this.role});
+
+  UserCreate.fromJson(Map<String, dynamic> json) {
+    username = json['username'];
+    password = json['password'];
+    fullName = json['full_name'];
+    organization = json['organization'];
+    isActive = json['is_active'];
+    email = json['email'];
+    role = json['role'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = <String, dynamic>{};
+    data['username'] = username;
+    data['password'] = password;
+    data['full_name'] = fullName;
+    data['organization'] = organization;
+    data['is_active'] = isActive;
+    data['email'] = email;
+    data['role'] = role;
+    return data;
+  }
+}
